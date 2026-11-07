@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 import typing as t
 from collections import defaultdict
+from contextlib import AbstractAsyncContextManager
 from datetime import timedelta
 
-from aiofiles import open as async_open
-from aiofiles.base import AiofilesContextManager
+from asyncfiles import open as async_open
 from flask.sansio.app import App
 from flask.sansio.blueprints import Blueprint as SansioBlueprint  # noqa
 from flask.sansio.blueprints import BlueprintSetupState as BlueprintSetupState  # noqa
@@ -26,6 +26,8 @@ from .typing import WebsocketCallable
 from .typing import WhileServingCallable
 
 if t.TYPE_CHECKING:
+    from asyncfiles import File
+
     from .wrappers import Response
 
 T_after_serving = t.TypeVar("T_after_serving", bound=AfterServingCallable)
@@ -96,7 +98,7 @@ class Blueprint(SansioBlueprint):
         self,
         path: FilePath,
         mode: str = "rb",
-    ) -> AiofilesContextManager:
+    ) -> AbstractAsyncContextManager[File]:
         """Open a file for reading.
 
         Use as
