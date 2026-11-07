@@ -10,6 +10,7 @@ from collections.abc import AsyncGenerator
 from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Coroutine
+from contextlib import AbstractAsyncContextManager
 from datetime import timedelta
 from inspect import isasyncgen
 from inspect import iscoroutinefunction
@@ -20,11 +21,11 @@ from typing import cast
 from typing import NoReturn
 from typing import overload
 from typing import ParamSpec
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from urllib.parse import quote
 
-from aiofiles import open as async_open
-from aiofiles.base import AiofilesContextManager
+from asyncfiles import open as async_open
 from flask.app import Flask
 from flask.sansio.app import App
 from flask.sansio.scaffold import setupmethod
@@ -118,6 +119,9 @@ from .wrappers import BaseRequestWebsocket
 from .wrappers import Request
 from .wrappers import Response
 from .wrappers import Websocket
+
+if TYPE_CHECKING:
+    from asyncfiles import File
 
 AppOrBlueprintKey = str | None  # The App key is None, whereas blueprints are named
 T_after_serving = TypeVar("T_after_serving", bound=AfterServingCallable)
@@ -373,7 +377,7 @@ class Quart(App):
         self,
         path: FilePath,
         mode: str = "rb",
-    ) -> AiofilesContextManager:
+    ) -> AbstractAsyncContextManager[File]:
         """Open a file for reading.
 
         Use as
@@ -390,7 +394,7 @@ class Quart(App):
 
     async def open_instance_resource(
         self, path: FilePath, mode: str = "rb"
-    ) -> AiofilesContextManager:
+    ) -> AbstractAsyncContextManager[File]:
         """Open a file for reading.
 
         Use as

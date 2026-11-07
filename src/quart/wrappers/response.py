@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 from collections.abc import AsyncIterable
 from collections.abc import AsyncIterator
 from collections.abc import Iterable
+from contextlib import AbstractAsyncContextManager
 from hashlib import md5
 from io import BytesIO
 from os import PathLike
@@ -15,9 +16,7 @@ from typing import Literal
 from typing import overload
 from typing import TYPE_CHECKING
 
-from aiofiles import open as async_open
-from aiofiles.base import AiofilesContextManager
-from aiofiles.threadpool.binary import AsyncBufferedIOBase
+from asyncfiles import open as async_open
 from werkzeug.datastructures import ContentRange
 from werkzeug.datastructures import Headers
 from werkzeug.exceptions import RequestedRangeNotSatisfiable
@@ -31,6 +30,8 @@ from ..utils import file_path_to_path
 from ..utils import run_sync_iterable
 
 if TYPE_CHECKING:
+    from asyncfiles import File
+
     from .request import Request
 
 
@@ -144,13 +145,15 @@ class FileBody(ResponseBody):
         self.end = self.size
         if buffer_size is not None:
             self.buffer_size = buffer_size
-        self.file: AsyncBufferedIOBase | None = None
-        self.file_manager: AiofilesContextManager = None
+        self.file: File | None = None
+        self.file_manager: AbstractAsyncContextManager[File] | None = None
 
     async def __aenter__(self) -> FileBody:
-        self.file_manager = async_open(self.file_path, mode="rb")
+        self.file_manager = async_open(
+            self.file_path, mode="rb", buffer_size=self.buffer_size
+        )
         self.file = await self.file_manager.__aenter__()
-        await self.file.seek(self.begin)
+        self.file.seek(self.begin)
         return self
 
     async def __aexit__(
@@ -162,14 +165,14 @@ class FileBody(ResponseBody):
         return self
 
     async def __anext__(self) -> bytes:
-        current = await self.file.tell()
+        current = self.file.tell()
         if current >= self.end:
             raise StopAsyncIteration()
         read_size = min(self.buffer_size, self.end - current)
         chunk = await self.file.read(read_size)
 
         if chunk:
-            return chunk
+            return chunk  # type: ignore
         else:
             raise StopAsyncIteration()
 

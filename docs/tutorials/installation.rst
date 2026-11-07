@@ -16,7 +16,7 @@ Dependencies
 Quart dependends on the following packages, which will automatically
 be installed with Quart:
 
-- aiofiles, to load files in an asyncio compatible manner,
+- py-asyncfiles, to load files in an asyncio compatible manner,
 - blinker, to manage signals,
 - click, to manage command line arguments
 - hypercorn, an ASGI server for development,
